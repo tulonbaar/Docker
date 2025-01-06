@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  app:
+    image: atuin/atuin:latest
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      - ATUIN_DB_HOST=db
+      - ATUIN_DB_USER=atuin
+      - ATUIN_DB_PASSWORD=atuin
+      - ATUIN_DB_NAME=atuin
+      - HOST=0.0.0.0
+    networks:
+      - atuin_network
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=atuin
+      - POSTGRES_PASSWORD=atuin
+      - POSTGRES_DB=atuin
+    volumes:
+      - atuin_db_volume:/var/lib/postgresql/data
+    networks:
+      - atuin_network
+
+volumes:
+  atuin_db_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/nfs/atuin-db-data
+
+networks:
+  atuin_network:
+    external: true

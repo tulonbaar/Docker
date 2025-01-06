@@ -16,6 +16,8 @@ services:
       - "3000:3000"
     depends_on:
       - atuin-db
+    networks:
+      - atuin_network
 
   db:
     image: postgres:13
@@ -29,6 +31,8 @@ services:
       - POSTGRES_DB=atuin
     volumes:
       - atuin_db_volume:/var/lib/postgresql/data
+    networks:
+      - atuin_network
 
 volumes:
   atuin_db_volume:
@@ -37,3 +41,7 @@ volumes:
       type: nfs
       o: addr=192.168.1.100,rw
       device: :/mnt/nfs/atuin-db-data
+
+networks:
+  atuin_network:
+    external: true
