@@ -1,0 +1,2 @@
+# Scripts
+These two scripts are used to prepare and start nginx containers. The `dependencies.sh` file creates a network and the `ingress_redirect.sh` file creates a redirect to the internal ingress docker swarm network.
