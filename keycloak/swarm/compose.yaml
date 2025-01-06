@@ -1,0 +1,53 @@
+version: '3'
+services:
+  app:
+    image: jboss/keycloak:11.0.2
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin
+      - DB_VENDOR=mysql
+      - DB_ADDR=keycloak-db
+      - DB_DATABASE=keycloak
+      - DB_USER=keycloak
+      - DB_PASSWORD=keycloak
+      - JGROUPS_DISCOVERY_PROTOCOL=dns.DNS_PING
+      - JGROUPS_DISCOVERY_PROPERTIES=dns_query=keycloak
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - keycloak_network
+
+  db:
+    image: mariadb:10.5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      - MYSQL_ROOT_PASSWORD=keycloak
+      - MYSQL_DATABASE=keycloak
+      - MYSQL_USER=keycloak
+      - MYSQL_PASSWORD=keycloak
+    volumes:
+      - keycloak_db_volume:/var/lib/mysql
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    networks:
+      - keycloak_network
+
+volumes:
+  keycloak_db_volume:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.100,rw
+      device: :/mnt/nfs/keycloak-db-data
+
+networks:
+  keycloak_network:
+    external: true
