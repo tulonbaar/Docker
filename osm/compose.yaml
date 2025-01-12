@@ -1,0 +1,194 @@
+version: '3.8'
+
+####################################################################################################################
+# Author: Tulon Baar                                                                                               #
+# Last update: 12.01.2024                                                                                          #
+# Description: Docker compose file for OSM project                                                                 #
+# Solution that will setup and start OSM environment using Novinatim and OSRM backend in two variations: Fast and  #
+# Short. Fast - search fastest route, Short - search shortest route                                                #
+# Warnings: Networks and volumes are created outside of this file. Still work in progress                          #
+####################################################################################################################
+
+services:
+  postgres:
+    image: postgis/postgis:14-3.3
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=renderer
+      - POSTGRES_PASSWORD=renderer
+      - POSTGRES_DB=gis
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    command: >
+      postgres
+        -c shared_buffers=1GB
+        -c maintenance_work_mem=256MB
+        -c autovacuum_work_mem=256MB
+        -c work_mem=128MB
+        -c effective_cache_size=2GB
+        -c synchronous_commit=off
+        -c max_wal_size=1GB
+        -c wal_buffers=16MB
+        -c min_wal_size=512MB
+    networks:
+      - osm-net
+
+  nominatim:
+    image: mediagis/nominatim:4.5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+    ports:
+      - "8080:8080"
+    volumes:
+      - nominatim-data:/data
+    environment:
+      - PBF_PATH=/data/AU_CZ_DE_HU_LI_PL_SK.osm.pbf
+      - REPLICATION_URL=https://download.geofabrik.de/europe-updates/
+      - NOMINATIM_PASSWORD=nominatim
+      - POSTGRES_PASSWORD=nominatim
+      - NOMINATIM_DATABASE=nominatim
+      - THREADS=8
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    networks:
+      - osm-net
+    depends_on:
+      - postgres
+      - map-preprocessor
+
+  routed_fast:
+    image: osrm/osrm-backend:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 12G
+        reservations:
+          memory: 8G
+    ports:
+      - "5000:5000"
+    volumes:
+      - osrm-fast-data:/fast
+    command: >
+      osrm-routed
+      -t 10
+      --algorithm mld
+      /fast/AU_CZ_DE_HU_LI_PL_SK.osrm
+    networks:
+      - osm-net
+    depends_on:
+      - osrm-fast-preprocessor
+
+  routed_short:
+    image: osrm/osrm-backend:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 6G
+    ports:
+      - "5003:5000"
+    volumes:
+      - osrm-short-data:/short
+    command: >
+      osrm-routed
+      --max-viaroute-size=15000
+      --max-trip-size=3000
+      --max-table-size=3000
+      -t 10
+      --algorithm mld
+      /short/AU_CZ_DE_HU_LI_PL_SK.osrm
+    networks:
+      - osm-net
+    depends_on:
+      - osrm-short-preprocessor
+
+  map-preprocessor:
+    image: debian:bullseye-slim
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - osrm-fast-data:/fast
+      - osrm-short-data:/short
+      - nominatim-data:/nominatim-data
+      - ./download-merge-maps.sh:/download-merge-maps.sh
+    command: >
+      bash -c "apt-get update && 
+               apt-get install -y wget osmium-tool && 
+               chmod +x /download-merge-maps.sh && 
+               /download-merge-maps.sh && 
+               cp /fast/AU_CZ_DE_HU_LI_PL_SK.osm.pbf /nominatim-data/ &&
+               cp /fast/AU_CZ_DE_HU_LI_PL_SK.osm.pbf /short/"
+    networks:
+      - osm-net
+
+  osrm-fast-preprocessor:
+    image: osrm/osrm-backend:latest
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - osrm-fast-data:/fast
+    command: >
+      sh -c "osrm-extract -p /opt/car.lua /fast/AU_CZ_DE_HU_LI_PL_SK.osm.pbf && 
+             osrm-partition /fast/AU_CZ_DE_HU_LI_PL_SK.osrm && 
+             osrm-customize /fast/AU_CZ_DE_HU_LI_PL_SK.osrm"
+    networks:
+      - osm-net
+    depends_on:
+      - map-preprocessor
+
+  osrm-short-preprocessor:
+    image: osrm/osrm-backend:latest
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - osrm-short-data:/short
+    command: >
+      sh -c "osrm-extract -p /opt/car.lua /short/AU_CZ_DE_HU_LI_PL_SK.osm.pbf && 
+             osrm-partition /short/AU_CZ_DE_HU_LI_PL_SK.osrm && 
+             osrm-customize /short/AU_CZ_DE_HU_LI_PL_SK.osrm"
+    networks:
+      - osm-net
+    depends_on:
+      - map-preprocessor
+
+volumes:
+  nominatim-data:
+    external: true
+  postgres-data:
+    external: true
+  osrm-fast-data:
+    external: true
+  osrm-short-data:
+    external: true
+
+networks:
+  osm-net:
+    driver: overlay
