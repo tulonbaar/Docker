@@ -1,11 +1,57 @@
 # Introduction
 This repository is used to store and manage start-up projects for applications on the Docker platform. I intend to adapt most of them to Docker Swarm needs. The repository is divided into folders by application and version. The folder described as swarm is intended for storing configuration files for use with Docker Swarm. 
 
-# Repository
-The repository is divided into folders by application and version. The folder described as swarm is intended for storing configuration files for use with Docker Swarm.
+# Repository structure
 
-# Scripts
-I add all the scripts I use to prepare and start applications to the solutions. The scripts are located in the `_helper_scripts` folder. I recommend using the `send_scripts.sh` script to send these scripts to multiple target machines. Setting SSH keys is necessary. Those solutions that need to have their specific `volume_create` and `volume_remove` scripts are located in the `_helper_scripts` folder inside the application folder.
+The repository contains the following folders:
+
+- `apps` - contains scripts and configuration files for applications
+- `apps/keycloak` - contains scripts and configuration files for Keycloak
+- `apps/semaphore` - contains scripts and configuration files for Semaphore
+- `apps/redis` - contains scripts and configuration files for Redis
+- `apps/restapi` - contains scripts and configuration files for REST API
+- `apps/osm` - contains scripts and configuration files for OSM    
+- `apps/ubuntu` - contains scripts and configuration files for Ubuntu (including the script for downloading and merging maps) - test environment
+- `apps/npm` - contains scripts and configuration files for NPM
+- `apps/registry` - contains scripts and configuration files for Registry
+- `apps/semaphore` - contains scripts and configuration files for Semaphore
+- `apps/portainer` - contains scripts and configuration files for Portainer
+- `apps/traefik` - contains scripts and configuration files for Traefik
+- `apps/tftp` - contains scripts and configuration files for TFTP
+- `apps/harbor` - contains scripts and configuration files for Harbor
+
+- `automation` - contains helper scripts that help to run solutions in Docker containers
+- `automation/config` - Contains configuration files used by scripts in the `automation` folder. Each configuration takes its name from the script that it refers to.
+- `automation/keycloak` - contains helper scripts that help to run Keycloak in a Docker container
+
+- `shared` - contains scripts and files used by multiple applications
+
+- `trash` - contains scripts and files that are no longer used, but serve as references to previous versions of the scripts.
+
+## Scripts
+The repository contains scripts that help run solutions in Docker containers. They can be found in the `automation` folder.
+
+<p style="background-color: red">
+  WARNING! Scripts assume that the target machine keys are in the default directory `~/.ssh`, and public keys are added to `~/.ssh/authorized_keys`.
+</p>
+
+### volume_create.sh
+Script for creating volumes. Requires a path to a configuration file with the names of volumes to create and options for creating volumes.
+
+### volume_remove.sh
+Script for removing volumes. Requires a path to a configuration file with the names of volumes to remove.
+
+### volume_inspect.sh
+Script for inspecting volumes. Requires a path to a configuration file with the names of volumes to inspect.
+
+### send_scripts.sh
+Script for sending scripts to other machines. Requires a path to a directory with a configuration file containing the names of the machines.
+
+## Configuration files
+The repository contains configuration files that are helpful in running solutions in Docker containers. They are located in the `compose` folders. Most applications require creating network and data resources. The corresponding configurations can be found in `config.yaml` files. Configuration files may contain settings that are not used by all scripts.
+
+### Why?
+Well, I noticed in my production environment that some of the NFS resources were created in default path of docker, which is /var/lib/docker/volumes. Not ideal - especially in docker swarm. So I created `automation` folder with scripts to create volumes that are created on all nodes at the same path... Sometimes. Other times I need to recreate volumes few times so they properly connect to NFS server - hence the scripts for removal and inspecting volumes.
 
 # Docker Compose
 I usually like to create volumes and networks outside of docker compose file. So most of them are set as external. Please be aware of that fact before using any docker compose file. It gives me more control over where my network is created and where my volumes are created - especially when it comes to NFS volumes.
@@ -24,7 +70,7 @@ You can use command below to create networks:
 
 Then you can use:
 
-```docker-compose.yaml
+```compose
 volumes:
   volume_name:
     external: true

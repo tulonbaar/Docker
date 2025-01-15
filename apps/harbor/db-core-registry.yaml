@@ -1,0 +1,52 @@
+version: '3.7'
+services:
+  db:
+    image: goharbor/harbor-db:v2.4.0
+    environment:
+      - POSTGRES_PASSWORD=yourpassword
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - harbor-net
+
+  core:
+    image: goharbor/harbor-core:v2.4.0
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - harbor-net
+
+  registry:
+    image: goharbor/registry-photon:v2.4.0
+    ports:
+      - "5000:5000"
+    volumes:
+      - images-data:/var/lib/registry
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - harbor-net
+
+volumes:
+  harbor_db-data:
+    external: true
+  harbor_images-data:
+    external: true
+
+networks:
+  harbor_net:
+    external: true

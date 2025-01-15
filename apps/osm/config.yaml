@@ -1,0 +1,12 @@
+NFS_SERVER: "<IP>"
+NFS_PATH_BASE: "<NFS_PATH_BASE>"
+VOLUME_NAMES:
+  - "nominatim-data"
+  - "postgres-data"
+  - "osrm-fast-data"
+  - "osrm-short-data"
+  - "map-preprocessor_data"
+  - "map-backup_data"
+OPTION: "bind"
+BIND_PATH: "<BIND_PATH>"
+APP_NAME: "osm"

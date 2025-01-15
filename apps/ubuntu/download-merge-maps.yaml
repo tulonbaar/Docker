@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  ubuntu-ssh:
+    image: ubuntu:noble
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "2222:22"  # Expose SSH on port 2222
+    volumes:
+      - shared_scripts_data:/scripts  # Mount the download script
+      - map-preprocessor_data:/mapy
+      - map-backup_data:/backup
+    command: >
+      bash -c "bash /scripts/osm/download-merge-maps.sh; \
+      tail -f /dev/null"  # Keep the container running
+    networks:
+      - test_network
+
+networks:
+  test_network:
+    external: true
+
+volumes:
+  shared_scripts_data:
+    external: true
+  map-preprocessor_data:
+    external: true
+  map-backup_data:
+    external: true

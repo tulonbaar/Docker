@@ -1,0 +1,7 @@
+{
+  "docker_nodes": [
+    "node1",
+    "node2",
+    "node3"
+  ]
+}

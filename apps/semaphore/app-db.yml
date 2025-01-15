@@ -1,0 +1,65 @@
+services:
+
+    db:
+        image: mysql:8
+        environment:
+            MYSQL_USER: semaphore
+            MYSQL_PASSWORD: /run/secrets/semaphore_mysql_db_user_password
+            MYSQL_DATABASE: semaphore
+            MYSQL_ROOT_PASSWORD_FILE: /run/secrets/semaphore_mysql_db_root_password
+            MYSQL_RANDOM_ROOT_PASSWORD: no
+        volumes:
+            - semaphore_mysql:/var/lib/mysql
+        networks:
+            - semaphore_network
+        secrets:
+            - semaphore_mysql_db_user_password
+            - semaphore_mysql_db_root_password
+
+    app:
+        ports:
+            - 3000:3000
+        image: semaphoreui/semaphore:v2.11.2
+        environment:
+            SEMAPHORE_DB_DIALECT: mysql
+            SEMAPHORE_DB_HOST: semaphore_db
+            SEMAPHORE_DB_NAME: semaphore
+            SEMAPHORE_DB_USER: semaphore
+            SEMAPHORE_DB_PASS: /run/secrets/semaphore_mysql_db_user_password
+            SEMAPHORE_ADMIN: admin
+            SEMAPHORE_ADMIN_PASSWORD: /run/secrets/semaphore_mysql_db_user_password
+            SEMAPHORE_ADMIN_NAME: Admin
+            SEMAPHORE_ADMIN_EMAIL: admin@localhost
+            SEMAPHORE_TMP_PATH: /tmp/semaphore
+            SEMAPHORE_WEB_ROOT: https://semaphore.tulon.org
+        volumes:
+            - semaphore_data:/var/lib/semaphore
+            - semaphore_config:/etc/semaphore
+            - semaphore_tmp:/tmp/semaphore
+        networks:
+            - semaphore_network
+        secrets:
+            - semaphore_mysql_db_user_password
+            - semaphore_semaphore_admin_password
+
+volumes:
+    semaphore_data:
+        external: true
+    semaphore_config:
+        external: true
+    semaphore_tmp:
+        external: true
+    semaphore_mysql:
+        external: true
+
+networks:
+    semaphore_network: 
+        external: true
+
+secrets:
+    semaphore_mysql_db_root_password:
+        external: true
+    semaphore_mysql_db_user_password:
+        external: true
+    semaphore_semaphore_admin_password:
+        external: true

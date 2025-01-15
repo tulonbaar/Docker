@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  app:
+    image: traefik:v2.3
+    command: --api.insecure=true --providers.docker --log.level=INFO
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+
+# Add the whoami service
+  whoami:
+     image: containous/whoami
+     labels:
+       - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"

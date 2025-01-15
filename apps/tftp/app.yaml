@@ -1,0 +1,42 @@
+version: '2'
+services:
+  tftpd:
+    image: docker.io/kalaksi/tftpd
+    # You can also use GitLab as an alternative to Docker Hub:
+    # image: registry.gitlab.com/kalaksi-containers/tftpd
+    restart: unless-stopped
+    environment:
+      # An interface and a port to listen to. "0.0.0.0" means all interfaces
+      TFTPD_BIND_ADDRESS: "0.0.0.0:1069"
+      # Search the man page for --blocksize to learn more
+      TFTPD_EXTRA_ARGS: '--blocksize 1468'
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+      - SYS_CHROOT
+    ports:
+      - 69:1069/udp
+    volumes:
+      - tftpd_boot:/tftpboot/boot
+      - tftpd_configuration:/tftpboot/pxelinux.cfg:ro
+  # http-bootfiles:
+  #   image: nginx:stable
+  #   restart: unless-stopped
+  #   cap_drop:
+  #     - ALL
+  #   cap_add:
+  #     - CHOWN
+  #     - DAC_OVERRIDE
+  #     - SETUID
+  #     - SETGID
+  #   volumes:
+  #     - ./nginx/conf.d:/etc/nginx/conf.d:ro
+  #     - tftpd_boot:/var/www/default/boot
+  #   ports:
+  #     - 8080:8080
+
+volumes:
+  tftpd_boot: {}
+  tftpd_configuration: {}
