@@ -1,0 +1,36 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "workbench.colorTheme": "Default Dark+",
+        "workbench.colorCustomizations": {
+            "editor.background": "#003300",
+            "editor.foreground": "#FFFFFF",
+            "editor.lineHighlightBackground": "#005500",
+            "editorCursor.foreground": "#FFFF00",
+            "editor.selectionBackground": "#007700",
+            "editor.selectionHighlightBackground": "#FFD700",
+            "sideBar.background": "#002200",
+            "sideBar.foreground": "#CCCCCC",
+            "sideBarSectionHeader.background": "#003300",
+            "sideBarSectionHeader.foreground": "#FFD700",
+            "activityBar.background": "#001100",
+            "activityBar.foreground": "#FFD700",
+            "activityBarBadge.background": "#FFD700",
+            "activityBarBadge.foreground": "#000000",
+            "titleBar.activeBackground": "#002200",
+            "titleBar.activeForeground": "#FFD700",
+            "statusBar.background": "#001100",
+            "statusBar.foreground": "#FFD700",
+            "list.activeSelectionBackground": "#005500",
+            "list.activeSelectionForeground": "#FFD700",
+            "list.hoverBackground": "#004400",
+            "tab.activeBackground": "#004400",
+            "tab.inactiveBackground": "#002200",
+            "tab.activeForeground": "#FFD700"
+        }
+    }
+}
