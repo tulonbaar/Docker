@@ -12,7 +12,7 @@
             "editor.lineHighlightBackground": "#005500",
             "editorCursor.foreground": "#FFFF00",
             "editor.selectionBackground": "#007700",
-            "editor.selectionHighlightBackground": "#FFD700",
+            "editor.selectionHighlightBackground": "#ffd900b0",
             "sideBar.background": "#002200",
             "sideBar.foreground": "#CCCCCC",
             "sideBarSectionHeader.background": "#003300",
