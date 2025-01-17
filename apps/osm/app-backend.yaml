@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:14-3.3
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=renderer
+      - POSTGRES_PASSWORD=renderer
+      - POSTGRES_DB=gis
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: >
+      postgres
+        -c shared_buffers=1GB
+        -c maintenance_work_mem=256MB
+        -c autovacuum_work_mem=256MB
+        -c work_mem=128MB
+        -c effective_cache_size=2GB
+        -c synchronous_commit=off
+        -c max_wal_size=1GB
+        -c wal_buffers=16MB
+        -c min_wal_size=512MB
+    networks:
+      - osm-net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "renderer", "-d", "gis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nominatim:
+    image: mediagis/nominatim:4.5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+    ports:
+      - "8080:8080"
+    volumes:
+      - nominatim_data:/data
+    environment:
+      - PBF_PATH=/data/AU_CZ_DE_HU_LI_PL_SK.osm.pbf
+      - REPLICATION_URL=https://download.geofabrik.de/europe-updates/
+      - NOMINATIM_PASSWORD=nominatim
+      - POSTGRES_PASSWORD=nominatim
+      - NOMINATIM_DATABASE=nominatim
+      - THREADS=8
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    networks:
+      - osm-net
+    depends_on:
+      - postgres
+
+  routed_fast:
+    image: osrm/osrm-backend:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 12G
+        reservations:
+          memory: 8G
+    ports:
+      - "5000:5000"
+    volumes:
+      - osrm-fast_data:/fast
+    command: >
+      osrm-routed
+      -t 10
+      --algorithm mld
+      /fast/AU_CZ_DE_HU_LI_PL_SK.osrm
+    networks:
+      - osm-net
+
+  routed_short:
+    image: osrm/osrm-backend:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 6G
+    ports:
+      - "5003:5000"
+    volumes:
+      - osrm-short_data:/short
+    command: >
+      osrm-routed
+      --max-viaroute-size=15000
+      --max-trip-size=3000
+      --max-table-size=3000
+      -t 10
+      --algorithm mld
+      /short/AU_CZ_DE_HU_LI_PL_SK.osrm
+    networks:
+      - osm-net
+
+volumes:
+  nominatim_data:
+    external: true  
+  postgres_data:
+    external: true
+  osrm-fast_data:
+    external: true
+  osrm-short_data:
+    external: true
+
+networks:
+  osm-net:
+    external: true

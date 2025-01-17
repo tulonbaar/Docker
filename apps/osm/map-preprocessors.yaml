@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  map-preprocessor:
+    image: ubuntu:noble
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: none
+    volumes:
+      - shared-scripts_data:/scripts
+      - map-preprocessor_data:/mapy
+      - map-backup_data:/backup
+      - osrm-fast_data:/fast
+      - osrm-short_data:/short
+      - nominatim_data:/data
+    command: >
+      bash -c "echo 'Starting map-preprocessor...'; \
+            echo 'Downloading and merging maps...'; \
+            bash /scripts/osm/download-merge-maps.sh; \
+            echo 'Maps downloaded, copying files to /fast...'; \
+            cp /mapy/* /fast/; \
+            echo 'Files copied to /fast, copying files to /short...'; \
+            cp /mapy/* /short/; \
+            echo 'Files copied to /data...'; \
+            cp /mapy/* /data/; \
+            echo 'Files copied to /data, map-preprocessor finished.'"
+    networks:
+      - osm-net
+
+  fast-preprocessor:
+    image: osrm/osrm-backend:latest
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - osrm-fast_data:/fast
+    command: >
+      sh -c "osrm-extract -p /opt/car.lua /fast/AU_CZ_DE_HU_LI_PL_SK.osm.pbf && 
+             osrm-partition /fast/AU_CZ_DE_HU_LI_PL_SK.osrm && 
+             osrm-customize /fast/AU_CZ_DE_HU_LI_PL_SK.osrm"
+    networks:
+      - osm-net
+    depends_on:
+      - map-preprocessor
+
+  short-preprocessor:
+    image: osrm/osrm-backend:latest
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - osrm-short_data:/short
+    command: >
+      sh -c "osrm-extract -p /opt/car.lua /short/AU_CZ_DE_HU_LI_PL_SK.osm.pbf && 
+             osrm-partition /short/AU_CZ_DE_HU_LI_PL_SK.osrm && 
+             osrm-customize /short/AU_CZ_DE_HU_LI_PL_SK.osrm"
+    networks:
+      - osm-net
+    depends_on:
+      - map-preprocessor
+
+volumes:
+  nominatim_data:
+    external: true  
+  osrm-fast_data:
+    external: true
+  osrm-short_data:
+    external: true
+  shared_scripts_data:
+    external: true
+  map-preprocessor_data:
+    external: true
+  map-backup_data:
+    external: true
+  shared-scripts_data:
+    external: true
+
+networks:
+  osm-net:
+    external: true

@@ -1,0 +1,7 @@
+NFS_SERVER: "<IP>"
+NFS_PATH_BASE: "<PATH>/shared_scripts/volumes"
+VOLUME_NAMES:
+  - "shared-scripts_data"
+OPTION: "bind"
+BIND_PATH: "<PATH>/shared_scripts/volumes"
+APP_NAME: ""

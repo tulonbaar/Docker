@@ -12,6 +12,8 @@ services:
       - redis_data:/data
     networks:
       - redis_network
+    environment:
+      - TZ=Europe/Warsaw
 
 volumes:
   redis_data:
