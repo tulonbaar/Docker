@@ -1,0 +1,9 @@
+{
+    "Show SSH Config for Dmaster Deploy": {
+        "prefix": "ssh-config-show",
+        "body": [
+            "cat .ssh/config | grep --after-context 5 \"$1\""
+        ],
+        "description": "Displays SSH configuration for the specified deploy with context"
+    }
+}
