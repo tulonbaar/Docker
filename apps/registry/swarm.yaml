@@ -18,6 +18,8 @@ services:
       - registry_credentials:/etc/docker/registry/auth:ro
     networks:
       - registry-net
+    environment:
+      - TZ=Europe/Warsaw
 
 networks:
   registry-net:
